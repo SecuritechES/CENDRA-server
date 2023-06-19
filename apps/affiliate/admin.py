@@ -13,7 +13,7 @@ class AffiliateAdmin(admin.ModelAdmin):
 
 class PaymentChoiceAdmin(admin.ModelAdmin):
     list_filter = ("affiliate__entity",)
-    list_display = ("show_entity", "show_fullname", "show_payment_choice")
+    list_display = ("show_entity", "show_fullname")
 
     def show_entity(self, obj):
         return obj.affiliate.entity
@@ -21,12 +21,9 @@ class PaymentChoiceAdmin(admin.ModelAdmin):
     def show_fullname(self, obj):
         return obj.affiliate.name + " " + obj.affiliate.surnames
     
-    def show_payment_choice(self, obj):
-        return obj.affiliate.get_payment_choice_display
     
     show_entity.short_description = "Asociación"
     show_fullname.short_description = "Nombre"
-    show_payment_choice.short_description = "Forma de pago"
 
 admin.site.register(Affiliate, AffiliateAdmin)
     

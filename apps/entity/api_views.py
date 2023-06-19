@@ -2,12 +2,13 @@ from io import BytesIO
 import xlsxwriter
 import datetime
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import status, viewsets, mixins
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from CENDRA.permissions import EntityAdminPermission, IsUserEntity
 from apps.affiliate.models import Affiliate
 from .models import Entity, DirectoratePosition, Directorate, YearlyCensus, YearlyCensusEntry
 from .serializers import EntitySerializer, DirectoratePositionSerializer, DirectorateSerializer
@@ -111,6 +112,8 @@ class EntityJoin(APIView):
         
         Returns the joined entity object
         """
+        if request.user.entity is not None:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         try:
             entity_id = request.data["id"]
             password = request.data["password"]
@@ -316,3 +319,41 @@ class CreateYearlyCensus(APIView):
                 census.entries.add(entry)
             return Response(status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+# Refactor to ViewSets after this point
+
+class EntityViewSet(mixins.CreateModelMixin, 
+                    mixins.RetrieveModelMixin, 
+                    mixins.UpdateModelMixin,
+                    mixins.ListModelMixin,
+                    viewsets.GenericViewSet):
+    permission_classes = [EntityAdminPermission]
+    serializer_class = EntitySerializer
+    queryset = Entity.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        serializer = self.get_serializer(super().get_queryset(), fields=Entity.fields_limited, many=True)
+        return Response(serializer.data)
+    
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        entity = get_object_or_404(super().get_queryset(), pk=pk)
+        if request.user.entity == entity:
+            return Response(self.get_serializer(entity).data)
+        else:
+            serializer = self.get_serializer(entity, fields=Entity.fields_limited)
+            return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        if request.user.entity is not None:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        return super().create(request, *args, **kwargs)
+    
+class DirectoratePositionsViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsUserEntity]
+    serializer_class = DirectoratePositionSerializer
+    queryset = DirectoratePosition.objects.all()
+
+    def get_queryset(self):
+        return super().get_queryset().filter(entity=self.request.user.entity)
+
+    

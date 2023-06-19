@@ -2,6 +2,8 @@ import os
 from django.db import models
 
 class Entity(models.Model):
+    fields_limited = ('id', 'name', 'photo')
+
     def logo_upload_rename(instance, filename):
         _, ext = os.path.splitext(filename)
         return 'avatar/entity/{0}/{1}'.format(instance.id, "logo" + ext)
@@ -43,6 +45,9 @@ class DirectoratePosition(models.Model):
     name = models.CharField(max_length=100)
     entity = models.ForeignKey('Entity', on_delete=models.CASCADE, related_name='positions')
     priority = models.IntegerField()
+
+    class Meta:
+        ordering = ('priority', 'pk')
 
     def __str__(self):
         return str(self.name)

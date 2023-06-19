@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from apps.entity.models import Directorate
 
 class Affiliate(models.Model):
+    fields_limited = ('id', 'census_number', 'name', 'surnames', 'photo', 'active')
+
     def photo_upload_rename(instance, filename):
         _, ext = os.path.splitext(filename)
         path = 'avatar/user/{0}'.format(instance.id)
@@ -44,6 +46,7 @@ class Affiliate(models.Model):
 
     def __str__(self):
         return str(self.name + " " + self.surnames)
+
     
     @property
     def position(self):

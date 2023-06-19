@@ -15,11 +15,11 @@ class Dashboard(APIView):
         members = Affiliate.objects.filter(entity=request.user.entity).count()
         news = NewsItem.objects.filter(entity=request.user.entity).count()
         bank = BankAccount.objects.filter(entity=request.user.entity.id)
-        serializer = BankAccountSerializer(bank, many=True)
+        bank_serializer = BankAccountSerializer(bank, many=True)
         
-        sum = 0
+        transactions_count = 0
         incomes = Income.objects.filter(account__entity=request.user.entity).count()
         outcomes = Outcome.objects.filter(account__entity=request.user.entity).count()
-        sum += incomes + outcomes
+        transactions_count = incomes + outcomes
 
-        return Response({'name': name, 'members': members, 'news': news, 'bank_accounts': serializer.data, 'movements': sum})
+        return Response({'name': name, 'members': members, 'news': news, 'bank_accounts': bank_serializer.data, 'movements': transactions_count})

@@ -1,12 +1,12 @@
 import os
 from django.urls import path, re_path
-from rest_framework import permissions
+from rest_framework import permissions, routers
 from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.views import get_schema_view
 from CENDRA.api_views import Dashboard
-from apps.affiliate.api_views import Affiliates, PaymentChoices, UpdatePhoto, ExportAffiliates
-from apps.entity.api_views import EntityPrivate, EntityJoin, DirectoratePositions, Directorates, CreateYearlyCensus
+from apps.affiliate.api_views import Affiliates, PaymentChoices, UpdatePhoto, ExportAffiliates, AffiliateViewSet, PaymentChoicesViewSet
+from apps.entity.api_views import EntityPrivate, EntityJoin, DirectoratePositions, Directorates, CreateYearlyCensus, EntityViewSet, DirectoratePositionsViewSet
 from apps.news.api_views import News
 from apps.treasury.api_views import BankAccounts, Transactions
 from apps.user.api_views import UserRegisterAffiliate, UserPrivate
@@ -31,6 +31,12 @@ schema_view_private = get_schema_view(
     generator_class=PrivateSchemaGenerator
 )
 
+router = routers.DefaultRouter()
+router.register(r'v2/affiliates', AffiliateViewSet)
+router.register(r'v2/affiliates/payments', PaymentChoicesViewSet)
+router.register(r'v2/entities', EntityViewSet)
+router.register(r'v2/entity/positions', DirectoratePositionsViewSet)
+
 urlpatterns = [
     path('dashboard', Dashboard.as_view()),
     path('user', UserPrivate.as_view()),
@@ -51,3 +57,5 @@ urlpatterns = [
     re_path(r'^swagger/$', schema_view_private.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', schema_view_private.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
+
+urlpatterns += router.urls

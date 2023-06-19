@@ -3,12 +3,13 @@ import datetime
 from django.http import HttpResponse
 import xlsxwriter
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import status, viewsets, mixins
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from CENDRA.permissions import EntityAdminPermission, IsUserOwner
 from .models import Affiliate, PaymentChoice
 from .serializers import AffiliateSerializer, PaymentChoiceSerializer
 
@@ -261,3 +262,45 @@ class ExportAffiliates(APIView):
             response.write(output.getvalue())
             return response
         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+# Refactor to ViewSets after this point
+
+class AffiliateViewSet(viewsets.ModelViewSet):
+    permission_classes = [EntityAdminPermission]
+    serializer_class = AffiliateSerializer
+    queryset = Affiliate.objects.all()
+
+    def get_queryset(self):
+        return super().get_queryset().filter(entity=self.request.user.entity, active=True)
+
+    def perform_create(self, serializer):
+        serializer.save(entity=self.request.user.entity)
+    
+    def list(self, request, *args, **kwargs):
+        if not request.user.is_entity_admin:
+            serializer = self.get_serializer(super().get_queryset(), fields=Affiliate.fields_limited, many=True)
+            return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
+    
+    def retrieve(self, request, *args, **kwargs):
+        if not request.user.is_entity_admin:
+            serializer = self.get_serializer(self.get_object(), fields=Affiliate.fields_limited)
+            return Response(serializer.data)
+        return super().retrieve(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_object(), data={'active':False}, partial=True)
+        if serializer.is_valid():
+            serializer.save(active=False)
+        else:
+            return Response(serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class PaymentChoicesViewSet(mixins.CreateModelMixin, 
+                    mixins.RetrieveModelMixin, 
+                    mixins.UpdateModelMixin,
+                    mixins.DestroyModelMixin,
+                    viewsets.GenericViewSet):
+    permission_classes = [IsUserOwner]
+    serializer_class = PaymentChoiceSerializer
+    queryset = PaymentChoice.objects.all()

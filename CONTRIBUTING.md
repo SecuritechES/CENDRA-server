@@ -1,6 +1,6 @@
 # Contributing
 
-Cuando contribuyas a este repositorio, primero platea los cambios que quieres realizar creando una nueva issue en el propio proyecto.
+Cuando contribuyas a este repositorio, te recomendamos que plantees los cambios que quieres realizar creando una nueva issue en el propio proyecto.
 
 Ten en cuenta que tenemos un [code of conduct](CODE_OF_CONDUCT.md), el cual te pedimos que respetes y sigas en todas tus interacciones con el proyecto.
 

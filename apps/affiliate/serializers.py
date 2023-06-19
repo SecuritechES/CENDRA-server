@@ -5,12 +5,12 @@ from apps.affiliate.models import Affiliate, PaymentChoice
 class PaymentChoiceSerializer(DynamicFieldsSerializer):
     class Meta:
         model = PaymentChoice
-        exclude = ['affiliate', 'id']
+        fields = '__all__'
 
 class AffiliateSerializer(DynamicFieldsSerializer):
     photo = serializers.ImageField(required=False)
-    payment_choice = PaymentChoiceSerializer(required=False)
-    position = serializers.CharField(required=False)
+    payment_choice = PaymentChoiceSerializer(required=False, read_only=True)
+    position = serializers.CharField(required=False, read_only=True)
 
     def get_position(self, instance):
         return self.position
